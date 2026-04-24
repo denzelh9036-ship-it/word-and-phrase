@@ -7,6 +7,7 @@ import urllib.request
 
 API_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/{}"
 WIKI_SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/{}"
+LOREMFLICKR_URL = "https://loremflickr.com/json/480/360/{}/all"
 
 
 class WordNotFound(Exception):
@@ -78,9 +79,15 @@ def _parse(query, data):
 
 
 def fetch_image(word):
-    """Return a thumbnail URL from Wikipedia summary, or '' if unavailable."""
+    """Return an image URL for `word` via Wikipedia (canonical) with a
+    Loremflickr keyword fallback so abstract / adverb / verb words still
+    get a picture. Returns '' only if both sources fail."""
     if not word or not word.strip():
         return ""
+    return _fetch_wikipedia(word) or _fetch_loremflickr(word) or ""
+
+
+def _fetch_wikipedia(word):
     slug = urllib.parse.quote(word.strip().replace(" ", "_"))
     url = WIKI_SUMMARY_URL.format(slug)
     req = urllib.request.Request(url, headers={"User-Agent": "WordAndPhrase/1.0"})
@@ -93,3 +100,20 @@ def fetch_image(word):
     thumb = (data.get("thumbnail") or {}).get("source") or ""
     orig = (data.get("originalimage") or {}).get("source") or ""
     return thumb or orig
+
+
+def _fetch_loremflickr(word):
+    # Keyword search: use the first word only for multi-word phrases so
+    # "make up" → "make" gets a hit rather than zero results.
+    keyword = word.strip().split()[0] if word.strip() else ""
+    if not keyword:
+        return ""
+    url = LOREMFLICKR_URL.format(urllib.parse.quote(keyword))
+    req = urllib.request.Request(url, headers={"User-Agent": "WordAndPhrase/1.0"})
+    try:
+        ctx = ssl.create_default_context()
+        with urllib.request.urlopen(req, timeout=6, context=ctx) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        return ""
+    return data.get("file") or ""
