@@ -1,0 +1,28 @@
+__pycache__
+*.pyc
+*.pyo
+
+# Local desktop artifacts — not needed by the server
+app.py
+tk_client.py
+tk_views/
+build/
+dist/
+*.spec
+Words Accumulation.xlsx
+
+# Dev-only Python deps (server uses stdlib only)
+requirements.txt
+
+# Local / editor
+.DS_Store
+.venv/
+venv/
+.vscode/
+.idea/
+
+# Deploy docs (not needed in the image)
+DEPLOY.md
+README.md
+.git/
+.gitignore

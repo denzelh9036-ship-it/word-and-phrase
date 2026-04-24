@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+*.pyo
+
+# PyInstaller artifacts (local Mac build — don't commit)
+build/
+dist/
+
+# Local editor / OS
+.DS_Store
+.venv/
+venv/
+.vscode/
+.idea/
+
+# Local data
+*.db
+*.db-journal
+*.db-shm
+*.db-wal

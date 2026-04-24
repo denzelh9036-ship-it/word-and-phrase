@@ -1,0 +1,4 @@
+Pillow>=11.0
+
+# dev dependency for packaging
+pyinstaller>=6.0

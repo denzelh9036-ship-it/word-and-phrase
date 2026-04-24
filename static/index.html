@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word &amp; Phrase</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<section id="auth-screen" class="auth-screen hidden">
+  <div class="auth-card">
+    <div class="auth-brand">Word &amp; Phrase</div>
+    <div class="auth-sub" id="auth-sub">Sign in to your account</div>
+
+    <label class="auth-label" for="auth-username">Username</label>
+    <input id="auth-username" type="text" autocomplete="username" spellcheck="false">
+
+    <label class="auth-label" for="auth-password">Password</label>
+    <input id="auth-password" type="password" autocomplete="current-password">
+
+    <div id="auth-error" class="auth-error"></div>
+
+    <button id="auth-submit" class="btn primary full">Sign in</button>
+
+    <div class="auth-toggle">
+      <span id="auth-toggle-text">New here?</span>
+      <a href="#" id="auth-toggle-link">Create an account</a>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN APP -->
+<div id="app-root" class="hidden">
+  <header class="top">
+    <div class="brand">Word &amp; Phrase</div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="search">Search</button>
+      <button class="tab" data-tab="book">My Book</button>
+    </nav>
+    <div class="user-chip">
+      <span id="user-name" class="user-name"></span>
+      <button id="logout-btn" class="btn-ghost">Log out</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="view" id="view-search">
+      <div class="search-bar">
+        <input id="q" type="text" placeholder="Type a word or phrase…" autocomplete="off">
+        <button id="search-btn" class="btn primary">Search</button>
+      </div>
+      <div id="search-status" class="status"></div>
+      <div id="search-result" class="result"></div>
+    </section>
+
+    <section class="view hidden" id="view-book">
+      <div class="book-header">
+        <div id="book-counts" class="muted"></div>
+        <button id="start-btn" class="btn primary" disabled>Start Learning</button>
+      </div>
+      <div class="book-body">
+        <aside id="book-list" class="book-list"></aside>
+        <div id="book-detail" class="book-detail">
+          <div class="muted centered">Select a word to view and edit its definitions.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-study">
+      <div class="study-top">
+        <button id="study-back" class="btn-ghost">← Back</button>
+        <div id="study-progress" class="muted"></div>
+      </div>
+      <div class="card" id="study-card">
+        <div class="word-big" id="study-word"></div>
+        <div class="phonetic" id="study-phonetic"></div>
+        <div class="defs" id="study-defs"></div>
+        <div class="card-actions" id="study-actions"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

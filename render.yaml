@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: word-and-phrase
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free             # 15-min sleep, no persistent disk. DB wipes on every redeploy.
+                           # To upgrade: change to `plan: starter`, re-add the `disk:` block below,
+                           # re-add `WORDPHRASE_DB_DIR=/data` env var, git push. $8/mo total.
+    region: singapore      # nearest Asia region; options: oregon / ohio / frankfurt / singapore
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: OPEN_BROWSER
+        value: "0"
+      - key: COOKIE_SECURE
+        value: "1"
+    # --- UNCOMMENT + set plan to starter to make data persistent ---
+    # disk:
+    #   name: data
+    #   mountPath: /data
+    #   sizeGB: 1
