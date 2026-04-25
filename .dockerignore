@@ -11,9 +11,6 @@ dist/
 *.spec
 Words Accumulation.xlsx
 
-# Dev-only Python deps (server uses stdlib only)
-requirements.txt
-
 # Local / editor
 .DS_Store
 .venv/
