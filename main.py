@@ -1,6 +1,8 @@
 import json
 import mimetypes
 import os
+import sys
+import traceback
 import urllib.parse
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -23,6 +25,17 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         if "/api/" in (self.path or ""):
             print(f"[{self.log_date_time_string()}] {self.command} {self.path} → {fmt % args}")
+
+    def handle_one_request(self):
+        try:
+            super().handle_one_request()
+        except Exception:
+            print(f"[ERROR] {self.command} {self.path}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            try:
+                self._json(500, {"error": "internal_error"})
+            except Exception:
+                pass
 
     # ---------- helpers ----------
 

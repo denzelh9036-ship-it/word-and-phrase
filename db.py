@@ -31,8 +31,8 @@ def _q(sql):
     return sql.replace("?", "%s") if USE_PG else sql
 
 
-def _today_sql():
-    return "CURRENT_DATE" if USE_PG else "date('now')"
+def _today_iso():
+    return date.today().isoformat()
 
 
 def _insert_returning_id(conn, sql, params):
@@ -433,13 +433,13 @@ def counts(user_id):
         ).fetchone()
         due = conn.execute(
             _q(
-                f"""
+                """
                 SELECT COUNT(*) AS c FROM progress p
                 JOIN words w ON w.id = p.word_id
-                WHERE w.user_id = ? AND p.stage < 5 AND p.next_review_date <= {_today_sql()}
+                WHERE w.user_id = ? AND p.stage < 5 AND p.next_review_date <= ?
                 """
             ),
-            (user_id,),
+            (user_id, _today_iso()),
         ).fetchone()
         return {
             "total": _scalar(total),
@@ -464,13 +464,13 @@ def due_word_ids(user_id):
     with _connect() as conn:
         rows = conn.execute(
             _q(
-                f"""
+                """
                 SELECT p.word_id FROM progress p
                 JOIN words w ON w.id = p.word_id
-                WHERE w.user_id = ? AND p.stage < 5 AND p.next_review_date <= {_today_sql()}
+                WHERE w.user_id = ? AND p.stage < 5 AND p.next_review_date <= ?
                 ORDER BY p.next_review_date ASC, p.word_id ASC
                 """
             ),
-            (user_id,),
+            (user_id, _today_iso()),
         ).fetchall()
         return [r["word_id"] for r in rows]
