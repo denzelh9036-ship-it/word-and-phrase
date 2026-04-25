@@ -404,3 +404,70 @@ main {
   padding: 32px 0;
   color: var(--muted);
 }
+
+/* MOBILE */
+@media (max-width: 720px) {
+  .top {
+    padding: 12px 14px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .brand { font-size: 15px; }
+  .tabs { gap: 2px; }
+  .tab { padding: 6px 10px; font-size: 12px; }
+  .user-chip { margin-left: auto; gap: 6px; }
+  .user-name { display: none; }
+
+  main { padding: 16px 14px 40px; }
+
+  .search-bar { flex-direction: column; }
+  #q { font-size: 16px; }
+  .search-bar .btn { width: 100%; }
+
+  .word-header { gap: 8px; }
+  .word-title { font-size: 22px; }
+  .word-image { max-width: 100%; max-height: 220px; }
+  .word-header .btn { margin-left: 0; width: 100%; }
+
+  .def-example { font-size: 14px; }
+
+  .book-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .book-header .btn { width: 100%; }
+  .book-body {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .book-list {
+    width: 100%;
+    max-height: 280px;
+  }
+  .book-item { padding: 12px 14px; }
+
+  .card {
+    padding: 24px 18px;
+    min-height: auto;
+    border-radius: 10px;
+  }
+  .word-big { font-size: 28px; }
+  .card .word-image { max-width: 100%; max-height: 180px; }
+  .defs { max-width: 100%; }
+  .card-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+    margin-top: 18px;
+  }
+  .card-actions .btn { width: 100%; padding: 12px 18px; }
+
+  .auth-card {
+    padding: 24px 20px;
+    max-width: 100%;
+  }
+  .auth-card input { font-size: 16px; }
+
+  .btn { min-height: 40px; }
+}

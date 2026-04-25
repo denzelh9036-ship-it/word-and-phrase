@@ -1,3 +1,5 @@
+psycopg[binary]>=3.2
+
 Pillow>=11.0
 
 # dev dependency for packaging

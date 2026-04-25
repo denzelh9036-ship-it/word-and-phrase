@@ -3,9 +3,8 @@ services:
     name: word-and-phrase
     runtime: docker
     dockerfilePath: ./Dockerfile
-    plan: free             # 15-min sleep, no persistent disk. DB wipes on every redeploy.
-                           # To upgrade: change to `plan: starter`, re-add the `disk:` block below,
-                           # re-add `WORDPHRASE_DB_DIR=/data` env var, git push. $8/mo total.
+    plan: free             # 15-min sleep. Persistence comes from external Postgres
+                           # (DATABASE_URL set in dashboard, e.g. Neon / Supabase free tier).
     region: singapore      # nearest Asia region; options: oregon / ohio / frankfurt / singapore
     envVars:
       - key: HOST
@@ -14,8 +13,5 @@ services:
         value: "0"
       - key: COOKIE_SECURE
         value: "1"
-    # --- UNCOMMENT + set plan to starter to make data persistent ---
-    # disk:
-    #   name: data
-    #   mountPath: /data
-    #   sizeGB: 1
+      - key: DATABASE_URL
+        sync: false        # set in Render dashboard: postgres://user:pass@host/db?sslmode=require
