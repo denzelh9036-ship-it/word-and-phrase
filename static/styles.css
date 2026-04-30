@@ -192,11 +192,65 @@ main {
 .btn-ghost:hover { background: var(--bg-soft); color: var(--text); }
 
 /* SEARCH VIEW */
+.search-bar-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
 .search-bar {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
 }
+.suggest-box {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 20;
+}
+.suggest-item {
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.suggest-item:last-child { border-bottom: none; }
+.suggest-item:hover, .suggest-item.highlight {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+/* AUDIO BUTTON */
+.audio-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 1;
+  background: var(--bg-soft);
+  transition: background 0.12s, transform 0.08s;
+}
+.audio-btn:hover { background: var(--accent-soft); }
+.audio-btn:active { transform: scale(0.92); }
+
+/* STUDY word row with audio btn */
+.study-word-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.study-word-row .audio-btn { width: 32px; height: 32px; font-size: 16px; }
 #q {
   flex: 1;
   padding: 10px 14px;

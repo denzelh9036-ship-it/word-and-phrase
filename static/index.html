@@ -47,9 +47,12 @@
 
   <main>
     <section class="view" id="view-search">
-      <div class="search-bar">
-        <input id="q" type="text" placeholder="Type a word or phrase…" autocomplete="off">
-        <button id="search-btn" class="btn primary">Search</button>
+      <div class="search-bar-wrap">
+        <div class="search-bar">
+          <input id="q" type="text" placeholder="Type a word or phrase…" autocomplete="off">
+          <button id="search-btn" class="btn primary">Search</button>
+        </div>
+        <div id="suggest-box" class="suggest-box hidden"></div>
       </div>
       <div id="search-status" class="status"></div>
       <div id="search-result" class="result"></div>
@@ -74,7 +77,10 @@
         <div id="study-progress" class="muted"></div>
       </div>
       <div class="card" id="study-card">
-        <div class="word-big" id="study-word"></div>
+        <div class="study-word-row">
+          <div class="word-big" id="study-word"></div>
+          <span id="study-audio"></span>
+        </div>
         <div class="phonetic" id="study-phonetic"></div>
         <div class="defs" id="study-defs"></div>
         <div class="card-actions" id="study-actions"></div>

@@ -80,6 +80,7 @@ CREATE TABLE words (
     phonetic   TEXT,
     added_at   TEXT NOT NULL,
     image_url  TEXT,
+    audio_url  TEXT,
     UNIQUE(user_id, text)
 );
 CREATE INDEX idx_words_user ON words(user_id);
@@ -129,7 +130,8 @@ _PG_DDL = [
         text       TEXT NOT NULL,
         phonetic   TEXT,
         added_at   TEXT NOT NULL,
-        image_url  TEXT
+        image_url  TEXT,
+        audio_url  TEXT
     )
     """,
     "CREATE UNIQUE INDEX words_user_text_lower ON words (user_id, LOWER(text))",
@@ -174,6 +176,7 @@ def init_db():
             if not _users_table_exists(conn):
                 for stmt in _PG_DDL:
                     conn.execute(stmt)
+            conn.execute("ALTER TABLE words ADD COLUMN IF NOT EXISTS audio_url TEXT")
             conn.commit()
         return
 
@@ -182,6 +185,10 @@ def init_db():
             # Fresh install OR upgrade from pre-accounts single-user data.
             # User chose to wipe on upgrade.
             conn.executescript(_SQLITE_DDL)
+        else:
+            cols = {r[1] for r in conn.execute("PRAGMA table_info(words)").fetchall()}
+            if "audio_url" not in cols:
+                conn.execute("ALTER TABLE words ADD COLUMN audio_url TEXT")
 
 
 # ---------- users ----------
@@ -276,13 +283,13 @@ def find_word_by_id(user_id, word_id):
         return _row_to_dict(row)
 
 
-def add_word(user_id, text, phonetic, defs, image_url=""):
+def add_word(user_id, text, phonetic, defs, image_url="", audio_url=""):
     today = date.today().isoformat()
     with _connect() as conn:
         word_id = _insert_returning_id(
             conn,
-            "INSERT INTO words (user_id, text, phonetic, added_at, image_url) VALUES (?, ?, ?, ?, ?)",
-            (user_id, text, phonetic, today, image_url or ""),
+            "INSERT INTO words (user_id, text, phonetic, added_at, image_url, audio_url) VALUES (?, ?, ?, ?, ?, ?)",
+            (user_id, text, phonetic, today, image_url or "", audio_url or ""),
         )
         for d in defs:
             conn.execute(
@@ -310,6 +317,16 @@ def set_image_url(user_id, word_id, url):
             conn.commit()
 
 
+def set_audio_url(user_id, word_id, url):
+    with _connect() as conn:
+        conn.execute(
+            _q("UPDATE words SET audio_url = ? WHERE id = ? AND user_id = ?"),
+            (url or "", word_id, user_id),
+        )
+        if USE_PG:
+            conn.commit()
+
+
 def delete_word(user_id, word_id):
     with _connect() as conn:
         cur = conn.execute(
@@ -326,7 +343,7 @@ def list_saved_words(user_id):
         rows = conn.execute(
             _q(
                 """
-                SELECT w.id, w.text, w.phonetic, w.added_at, w.image_url,
+                SELECT w.id, w.text, w.phonetic, w.added_at, w.image_url, w.audio_url,
                        p.stage, p.next_review_date, p.correct_count, p.wrong_count
                 FROM words w
                 JOIN progress p ON p.word_id = w.id
@@ -359,12 +376,18 @@ def get_word_with_defs(user_id, word_id):
             ),
             (word_id,),
         ).fetchone()
+        audio_url = ""
+        try:
+            audio_url = w["audio_url"] or ""
+        except (KeyError, IndexError):
+            pass
         return {
             "id": w["id"],
             "text": w["text"],
             "phonetic": w["phonetic"],
             "added_at": w["added_at"],
             "image_url": w["image_url"] or "",
+            "audio_url": audio_url,
             "definitions": [dict(d) for d in defs],
             "progress": dict(p) if p else None,
         }

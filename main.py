@@ -142,7 +142,18 @@ class Handler(BaseHTTPRequestHandler):
                 if url:
                     db.set_image_url(user["id"], wid, url)
                     data["image_url"] = url
+            if not data.get("audio_url"):
+                aurl = dictionary.fetch_audio(data["text"])
+                if aurl:
+                    db.set_audio_url(user["id"], wid, aurl)
+                    data["audio_url"] = aurl
             self._json(200, data)
+            return
+
+        if path == "/api/suggest":
+            qs = urllib.parse.parse_qs(parsed.query)
+            q = (qs.get("q") or [""])[0].strip()
+            self._json(200, {"suggestions": list(dictionary.suggest(q))})
             return
 
         if path == "/api/study/session":
@@ -276,14 +287,16 @@ class Handler(BaseHTTPRequestHandler):
             image_url = (body.get("image_url") or "").strip()
             if not image_url:
                 image_url = dictionary.fetch_image(word)
+            audio_url = (body.get("audio_url") or "").strip()
             wid = db.add_word(
                 user["id"],
                 word,
                 (body.get("phonetic") or "").strip(),
                 clean,
                 image_url=image_url,
+                audio_url=audio_url,
             )
-            self._json(200, {"id": wid, "image_url": image_url})
+            self._json(200, {"id": wid, "image_url": image_url, "audio_url": audio_url})
             return
 
         if path == "/api/answer":

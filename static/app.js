@@ -11,7 +11,45 @@ const state = {
   studyIdx: 0,
   studyRevealed: false,
   authMode: "login", // or "register"
+  suggestList: [],
+  suggestIdx: -1,
 };
+
+// ---------- audio ----------
+function playPronunciation(text, url) {
+  if (url) {
+    const audio = new Audio(url);
+    audio.play().catch(() => fallbackTTS(text));
+  } else {
+    fallbackTTS(text);
+  }
+}
+function fallbackTTS(text) {
+  if (!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-US";
+  u.rate = 0.9;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
+}
+function audioBtn(text, url) {
+  return `<button class="audio-btn" data-audio-text="${escapeHTML(text)}" data-audio-url="${escapeHTML(url || "")}" title="Play pronunciation" type="button">🔊</button>`;
+}
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".audio-btn");
+  if (!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  playPronunciation(btn.dataset.audioText || "", btn.dataset.audioUrl || "");
+});
+
+function debounce(fn, ms) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
 
 // ---------- fetch ----------
 async function api(path, opts = {}) {
@@ -129,8 +167,96 @@ function switchTab(tab) {
 }
 
 // ---------- SEARCH ----------
-$("#search-btn").addEventListener("click", doSearch);
-$("#q").addEventListener("keydown", (e) => { if (e.key === "Enter") doSearch(); });
+$("#search-btn").addEventListener("click", () => { hideSuggest(); doSearch(); });
+$("#q").addEventListener("keydown", (e) => {
+  const box = $("#suggest-box");
+  const visible = box && !box.classList.contains("hidden") && state.suggestList.length > 0;
+  if (e.key === "ArrowDown" && visible) {
+    e.preventDefault();
+    state.suggestIdx = (state.suggestIdx + 1) % state.suggestList.length;
+    renderSuggestHighlight();
+    return;
+  }
+  if (e.key === "ArrowUp" && visible) {
+    e.preventDefault();
+    state.suggestIdx = state.suggestIdx <= 0 ? state.suggestList.length - 1 : state.suggestIdx - 1;
+    renderSuggestHighlight();
+    return;
+  }
+  if (e.key === "Escape") {
+    hideSuggest();
+    return;
+  }
+  if (e.key === "Enter") {
+    if (visible && state.suggestIdx >= 0) {
+      e.preventDefault();
+      const word = state.suggestList[state.suggestIdx];
+      $("#q").value = word;
+      hideSuggest();
+      doSearch();
+      return;
+    }
+    hideSuggest();
+    doSearch();
+  }
+});
+$("#q").addEventListener("input", debounce(fetchSuggest, 180));
+$("#q").addEventListener("blur", () => setTimeout(hideSuggest, 150));
+$("#q").addEventListener("focus", () => {
+  if (state.suggestList.length > 0) $("#suggest-box").classList.remove("hidden");
+});
+
+async function fetchSuggest() {
+  const q = $("#q").value.trim();
+  if (q.length < 2) {
+    state.suggestList = [];
+    hideSuggest();
+    return;
+  }
+  let data;
+  try {
+    data = await api(`/api/suggest?q=${encodeURIComponent(q)}`);
+  } catch {
+    return;
+  }
+  state.suggestList = (data && data.suggestions) || [];
+  state.suggestIdx = -1;
+  renderSuggest();
+}
+
+function renderSuggest() {
+  const box = $("#suggest-box");
+  if (!box) return;
+  if (state.suggestList.length === 0) {
+    hideSuggest();
+    return;
+  }
+  box.innerHTML = state.suggestList
+    .map((w, i) => `<div class="suggest-item" data-idx="${i}">${escapeHTML(w)}</div>`)
+    .join("");
+  box.classList.remove("hidden");
+  box.querySelectorAll(".suggest-item").forEach((el) => {
+    el.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      const word = state.suggestList[Number(el.dataset.idx)];
+      $("#q").value = word;
+      hideSuggest();
+      doSearch();
+    });
+  });
+}
+
+function renderSuggestHighlight() {
+  $$("#suggest-box .suggest-item").forEach((el, i) => {
+    el.classList.toggle("highlight", i === state.suggestIdx);
+  });
+}
+
+function hideSuggest() {
+  const box = $("#suggest-box");
+  if (box) box.classList.add("hidden");
+  state.suggestIdx = -1;
+}
 
 async function doSearch() {
   const q = $("#q").value.trim();
@@ -138,6 +264,7 @@ async function doSearch() {
   setStatus("Looking up…");
   $("#search-result").innerHTML = "";
   $("#search-btn").disabled = true;
+  hideSuggest();
   try {
     const data = await api(`/api/search?q=${encodeURIComponent(q)}`);
     state.currentResult = data;
@@ -172,6 +299,7 @@ function renderSearchResult(data) {
   container.innerHTML = `
     <div class="word-header">
       <div class="word-title">${escapeHTML(data.word)}</div>
+      ${audioBtn(data.word, data.audio_url)}
       ${data.phonetic ? `<div class="phonetic">${escapeHTML(data.phonetic)}</div>` : ""}
       <button id="add-btn" class="${btnClass}" ${disabled}>${btnLabel}</button>
     </div>
@@ -214,6 +342,7 @@ async function addCurrent() {
         word: state.currentResult.word,
         phonetic: state.currentResult.phonetic,
         image_url: state.currentResult.image_url || "",
+        audio_url: state.currentResult.audio_url || "",
         definitions: defs,
       }),
     });
@@ -291,6 +420,7 @@ async function showBookDetail(wordId) {
   $("#book-detail").innerHTML = `
     <div class="word-header">
       <div class="word-title">${escapeHTML(data.text)}</div>
+      ${audioBtn(data.text, data.audio_url)}
       ${data.phonetic ? `<div class="phonetic">${escapeHTML(data.phonetic)}</div>` : ""}
       <button id="delete-btn" class="btn-ghost btn-danger">Remove from book</button>
     </div>
@@ -366,6 +496,7 @@ function showStudyCard() {
   if (idx >= total) {
     progressEl.textContent = "";
     wordEl.textContent = "All done for today! 🎉";
+    $("#study-audio").innerHTML = "";
     phoneticEl.textContent = "";
     defsEl.innerHTML = `<div class="done">Come back tomorrow, or add more words to your book.</div>`;
     actionsEl.innerHTML = "";
@@ -376,6 +507,7 @@ function showStudyCard() {
   state.studyRevealed = false;
   progressEl.textContent = `${idx + 1} / ${total}`;
   wordEl.textContent = w.text;
+  $("#study-audio").innerHTML = audioBtn(w.text, w.audio_url);
   phoneticEl.textContent = w.phonetic || "";
   defsEl.innerHTML = "";
 
@@ -385,6 +517,8 @@ function showStudyCard() {
   `;
   $("#dont-btn").addEventListener("click", () => answerStudy(false));
   $("#know-btn").addEventListener("click", () => answerStudy(true));
+
+  playPronunciation(w.text, w.audio_url || "");
 }
 
 async function answerStudy(knew) {
